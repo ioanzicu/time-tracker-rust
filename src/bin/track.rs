@@ -2,6 +2,7 @@ use error_stack::{Report, Result, ResultExt};
 use tracing::{info, instrument, warn};
 use track::{
     error::{AppError, Suggestion},
+    feature::cli,
     init,
 };
 
@@ -18,6 +19,10 @@ use track::{
 fn main() -> Result<(), AppError> {
     init::error_reporting();
     init::tracing();
+
+    cli::run()
+        .change_context(AppError)
+        .attach_printable("failed to run CLI")?;
 
     Ok(())
 }
