@@ -43,7 +43,7 @@ pub struct FlatFileTracker {
 }
 
 impl FlatFileTracker {
-    fn new<D, L>(db: D, lockfile: L) -> Self
+    pub fn new<D, L>(db: D, lockfile: L) -> Self
     where
         D: Into<PathBuf>,
         L: Into<PathBuf>,

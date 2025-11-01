@@ -1,5 +1,8 @@
 use clap::{Parser, Subcommand};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
+
+use crate::feature::tracker::{FlatFileTracker, StartupStatus, Tracker};
+
 #[derive(Debug, thiserror::Error)]
 #[error("a CLI error occured")]
 pub struct CliError;
@@ -25,8 +28,14 @@ pub struct Cli {
 pub fn run() -> Result<(), CliError> {
     let args: Cli = Cli::parse();
 
+    let mut tracker = FlatFileTracker::new("db.json", "lockfile");
+
     match args.command {
-        Command::Start => todo!(),
+        Command::Start => match tracker.start() {
+            Ok(StartupStatus::Started) => println!("tracking started"),
+            Ok(StartupStatus::Running) => println!("tracker already running"),
+            Err(e) => return Err(e).change_context(CliError),
+        },
     }
 
     Ok(())

@@ -6,7 +6,7 @@ use std::{ops::Add, time::Duration};
 use crate::feature::tracker::Tracker;
 
 #[derive(Debug, Clone, Copy)]
-enum ReportTimespan {
+pub enum ReportTimespan {
     Last(Duration),
 }
 

@@ -1,5 +1,13 @@
 use assert_cmd::Command;
+use assert_fs::{TempDir, fixture::ChildPath, prelude::PathChild};
 use testresult::TestResult;
+
+fn tracking_paths() -> (TempDir, ChildPath, ChildPath) {
+    let temp: TempDir = TempDir::new().unwrap();
+    let db: ChildPath = temp.child("db.json");
+    let lockfile: ChildPath = temp.child("lockfile");
+    (temp, db, lockfile)
+}
 
 #[test]
 fn status_code_is_error_if_no_command_specified() -> TestResult {
@@ -9,15 +17,27 @@ fn status_code_is_error_if_no_command_specified() -> TestResult {
 
 #[test]
 fn start_command_starts_tracking_time() -> TestResult {
-    Command::cargo_bin("track")?.arg("start").assert().success();
-    todo!("");
+    let (_tempdir, db, lockfile) = tracking_paths();
+
+    // Track start --db-dir PATH --lockfile PATH
+    Command::cargo_bin("track")?
+        .arg("start")
+        .arg("--db-dir")
+        .arg(db.to_path_buf())
+        .arg("--lockfile")
+        .arg(lockfile.to_path_buf())
+        .assert()
+        .success();
+
     Ok(())
 }
 
 #[test]
 fn stop_command_stops_tracking_time() -> TestResult {
     Command::cargo_bin("track")?.arg("stop").assert().success();
+
     todo!("");
+
     Ok(())
 }
 

@@ -1,14 +1,17 @@
+mod flatfile;
+mod reporter;
+
 use chrono::{DateTime, Utc};
 use error_stack::Result;
 use serde::{Deserialize, Serialize};
-
-mod flatfile;
-mod reporter;
 
 // flat file tracker
 // 2 files:
 // - "lockfile": tracker is running
 // - "database file": JSON doc
+
+pub use flatfile::FlatFileTracker;
+pub use reporter::{ReportTimespan, Reporter, ReporterError};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct StartTime(DateTime<Utc>);
@@ -41,7 +44,7 @@ pub struct TimeRecord {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum StartupStatus {
+pub enum StartupStatus {
     /// Time tracker started
     Started,
     /// Time tracker was already running
