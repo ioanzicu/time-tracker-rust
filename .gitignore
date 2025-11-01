@@ -1,2 +1,31 @@
-/target
+# === Rust / Cargo ===
+# Compiled files
+target/
+debug/
+release/
 
+# Cargo-specific files
+**/*.rs.bk
+Cargo.lock
+# (Keep Cargo.lock for binaries; ignore for libraries — see note below)
+
+# === Build tools ===
+# Generated build artifacts
+*.dll
+*.so
+*.dylib
+*.exe
+
+# === Logs / Temp ===
+*.log
+*.tmp
+
+# === IDEs and Editors ===
+# VS Code
+.vscode/
+
+# IntelliJ / CLion / RustRover
+.idea/
+
+# Sublime
+*.sublime-workspa*
