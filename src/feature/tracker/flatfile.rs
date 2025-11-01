@@ -35,6 +35,14 @@ impl FlatFileDatabase {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum StartupStatus {
+    /// Time tracker started
+    Started,
+    /// Time tracker was already running
+    Running,
+}
+
 pub struct FlatFileTracker {
     db: PathBuf,
     lockfile: PathBuf,
@@ -51,27 +59,34 @@ impl FlatFileTracker {
         Self { db, lockfile }
     }
 
-    fn start(&self) -> Result<(), FlatFileTrackerError> {
-        // Save the current start time into lockfile
-        let lockfile_data = {
-            let start_time = StartTime::now();
-            let data = LockfileData { start_time };
-            serde_json::to_string(&data)
+    fn start(&self) -> Result<StartupStatus, FlatFileTrackerError> {
+        // Two states:
+        // - startup from not running
+        // - startup while already running
+        if self.lockfile.exists() {
+            Ok(StartupStatus::Running)
+        } else {
+            // Save the current start time into lockfile
+            let lockfile_data = {
+                let start_time = StartTime::now();
+                let data = LockfileData { start_time };
+                serde_json::to_string(&data)
+                    .change_context(FlatFileTrackerError)
+                    .attach_printable("failed to serialize lockfile data")?
+            };
+
+            OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&self.lockfile)
                 .change_context(FlatFileTrackerError)
-                .attach_printable("failed to serialize lockfile data")?
-        };
+                .attach_printable("unable to create new lockfile when starting trakcer")?
+                .write_all(&lockfile_data.as_bytes())
+                .change_context(FlatFileTrackerError)
+                .attach_printable("failed to write lockfile data")?;
 
-        OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&self.lockfile)
-            .change_context(FlatFileTrackerError)
-            .attach_printable("unable to create new lockfile when starting trakcer")?
-            .write_all(&lockfile_data.as_bytes())
-            .change_context(FlatFileTrackerError)
-            .attach_printable("failed to write lockfile data")?;
-
-        Ok(())
+            Ok(StartupStatus::Started)
+        }
     }
 
     fn is_running(&self) -> bool {
@@ -174,8 +189,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::{process::Child, time::Duration};
-
     use assert_fs::{TempDir, fixture::ChildPath, prelude::PathChild};
 
     use super::*;
@@ -233,5 +246,30 @@ mod tests {
         // Then a record is saved
         // Iter<Record>
         assert!(tracker.records().unwrap().next().is_some());
+    }
+
+    #[test]
+    fn multiple_starts_returns_already_running_state() {
+        // Given a new tracker that is running
+        let (_tempdir, db, lockfile) = tracking_paths();
+        let tracker: FlatFileTracker = new_flat_file_tracker(&db, &lockfile);
+        tracker.start().unwrap();
+
+        // When the tracker is started again
+        let started = tracker.start().unwrap();
+
+        // Then the "alread running" state is returned
+        assert_eq!(started, StartupStatus::Running);
+    }
+
+    #[test]
+    fn initial_starts_returns_started_state() {
+        // Given a new tracker that is running
+        let (_tempdir, db, lockfile) = tracking_paths();
+        let tracker: FlatFileTracker = new_flat_file_tracker(&db, &lockfile);
+        let started = tracker.start().unwrap();
+
+        // Then the "started" state is returned
+        assert_eq!(started, StartupStatus::Started);
     }
 }
