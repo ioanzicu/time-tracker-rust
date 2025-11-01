@@ -9,6 +9,19 @@ fn tracking_paths() -> (TempDir, ChildPath, ChildPath) {
     (temp, db, lockfile)
 }
 
+fn start_tracking(db: &ChildPath, lockfile: &ChildPath) -> Result<(), testresult::TestError> {
+    Command::cargo_bin("track")?
+        .arg("--db-dir")
+        .arg(db.to_path_buf())
+        .arg("--lockfile")
+        .arg(lockfile.to_path_buf())
+        .arg("start")
+        .assert()
+        .success();
+
+    Ok(())
+}
+
 #[test]
 fn status_code_is_error_if_no_command_specified() -> TestResult {
     Command::cargo_bin("track")?.assert().failure();
@@ -19,24 +32,29 @@ fn status_code_is_error_if_no_command_specified() -> TestResult {
 fn start_command_starts_tracking_time() -> TestResult {
     let (_tempdir, db, lockfile) = tracking_paths();
 
-    // Track start --db-dir PATH --lockfile PATH
-    Command::cargo_bin("track")?
-        .arg("start")
-        .arg("--db-dir")
-        .arg(db.to_path_buf())
-        .arg("--lockfile")
-        .arg(lockfile.to_path_buf())
-        .assert()
-        .success();
+    start_tracking(&db, &lockfile)?;
+
+    assert!(lockfile.to_path_buf().exists());
 
     Ok(())
 }
 
 #[test]
 fn stop_command_stops_tracking_time() -> TestResult {
-    Command::cargo_bin("track")?.arg("stop").assert().success();
+    let (_tempdir, db, lockfile) = tracking_paths();
 
-    todo!("");
+    start_tracking(&db, &lockfile)?;
+
+    Command::cargo_bin("track")?
+        .arg("--db-dir")
+        .arg(db.to_path_buf())
+        .arg("--lockfile")
+        .arg(lockfile.to_path_buf())
+        .arg("stop")
+        .assert()
+        .success();
+
+    assert!(!lockfile.to_path_buf().exists());
 
     Ok(())
 }

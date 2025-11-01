@@ -29,3 +29,5 @@ Cargo.lock
 
 # Sublime
 *.sublime-workspa*
+
+lockfile

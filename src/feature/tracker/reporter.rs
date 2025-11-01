@@ -1,7 +1,7 @@
 use chrono::Utc;
 use error_stack::Result;
 use error_stack::ResultExt;
-use std::{ops::Add, time::Duration};
+use std::time::Duration;
 
 use crate::feature::tracker::Tracker;
 
