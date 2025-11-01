@@ -104,7 +104,7 @@ impl FlatFileTracker {
 }
 
 impl Tracker for FlatFileTracker {
-    fn start(&self) -> Result<StartupStatus, TrackerError> {
+    fn start(&mut self) -> Result<StartupStatus, TrackerError> {
         // Two states:
         // - startup from not running
         // - startup while already running
@@ -115,7 +115,7 @@ impl Tracker for FlatFileTracker {
         self.lockfile.exists()
     }
 
-    fn stop(&self) -> Result<(), TrackerError> {
+    fn stop(&mut self) -> Result<(), TrackerError> {
         self.stop_impl().change_context(TrackerError)
     }
 
@@ -213,7 +213,7 @@ mod tests {
         let (_tempdir, db, lockfile) = tracking_paths();
 
         // Given a default tracker
-        let tracker: FlatFileTracker =
+        let mut tracker: FlatFileTracker =
             FlatFileTracker::new(db.to_path_buf(), lockfile.to_path_buf());
 
         // When the tracker is started
@@ -227,7 +227,7 @@ mod tests {
     fn is_running_returns_false_after_stopping_tracker() {
         // Given a new tracker that is running
         let (_tempdir, db, lockfile) = tracking_paths();
-        let tracker: FlatFileTracker = new_flat_file_tracker(&db, &lockfile);
+        let mut tracker: FlatFileTracker = new_flat_file_tracker(&db, &lockfile);
         tracker.start().unwrap();
 
         // When the tracker is started
@@ -241,7 +241,7 @@ mod tests {
     fn time_record_created_when_tracker_stops() {
         // Given a new tracker that is running
         let (_tempdir, db, lockfile) = tracking_paths();
-        let tracker: FlatFileTracker = new_flat_file_tracker(&db, &lockfile);
+        let mut tracker: FlatFileTracker = new_flat_file_tracker(&db, &lockfile);
         tracker.start().unwrap();
 
         // When the tracker is started
@@ -256,7 +256,7 @@ mod tests {
     fn multiple_starts_returns_already_running_state() {
         // Given a new tracker that is running
         let (_tempdir, db, lockfile) = tracking_paths();
-        let tracker: FlatFileTracker = new_flat_file_tracker(&db, &lockfile);
+        let mut tracker: FlatFileTracker = new_flat_file_tracker(&db, &lockfile);
         tracker.start().unwrap();
 
         // When the tracker is started again
@@ -270,7 +270,7 @@ mod tests {
     fn initial_starts_returns_started_state() {
         // Given a new tracker that is running
         let (_tempdir, db, lockfile) = tracking_paths();
-        let tracker: FlatFileTracker = new_flat_file_tracker(&db, &lockfile);
+        let mut tracker: FlatFileTracker = new_flat_file_tracker(&db, &lockfile);
         let started = tracker.start().unwrap();
 
         // Then the "started" state is returned
