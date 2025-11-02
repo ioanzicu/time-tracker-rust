@@ -18,7 +18,7 @@ use std::{
 pub struct FlatFileTrackerError;
 
 use crate::feature::tracker::{
-    EndTime, StartTime, StartupStatus, TimeRecord, Tracker, TrackerError,
+    EndTime, Reporter, StartTime, StartupStatus, TimeRecord, Tracker, TrackerError,
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -41,6 +41,8 @@ pub struct FlatFileTracker {
     db: PathBuf,
     lockfile: PathBuf,
 }
+
+impl Reporter for FlatFileTracker {}
 
 impl FlatFileTracker {
     pub fn new<D, L>(db: D, lockfile: L) -> Self
@@ -72,7 +74,7 @@ impl FlatFileTracker {
                 .open(&self.lockfile)
                 .change_context(FlatFileTrackerError)
                 .attach_printable("unable to create new lockfile when starting trakcer")?
-                .write_all(&lockfile_data.as_bytes())
+                .write_all(lockfile_data.as_bytes())
                 .change_context(FlatFileTrackerError)
                 .attach_printable("failed to write lockfile data")?;
 
@@ -93,7 +95,7 @@ impl FlatFileTracker {
         // 4. Save the record
         let mut db = load_database(&self.db)?;
         db.push(record);
-        save_database(&self.db, &db);
+        save_database(&self.db, &db).unwrap();
 
         std::fs::remove_file(&self.lockfile)
             .change_context(FlatFileTrackerError)
@@ -186,9 +188,9 @@ where
         .change_context(FlatFileTrackerError)
         .attach_printable("failed to open lockfile")?;
 
-    Ok(serde_json::from_reader(file)
+    serde_json::from_reader(file)
         .change_context(FlatFileTrackerError)
-        .attach_printable("failed to deserialize lockfile")?)
+        .attach_printable("failed to deserialize lockfile")
 }
 
 #[cfg(test)]

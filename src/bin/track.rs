@@ -1,10 +1,5 @@
-use error_stack::{Report, Result, ResultExt};
-use tracing::{info, instrument, warn};
-use track::{
-    error::{AppError, Suggestion},
-    feature::cli,
-    init,
-};
+use error_stack::{Result, ResultExt};
+use track::{error::AppError, feature::cli, init};
 
 // RUST_LOG=warn cargo run
 // RUST_LOG=trace cargo run
